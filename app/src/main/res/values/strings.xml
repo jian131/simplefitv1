@@ -34,6 +34,7 @@
     <string name="invalid_email">Email không hợp lệ</string>
     <string name="invalid_password">Mật khẩu phải có ít nhất 6 ký tự</string>
     <string name="password_mismatch">Mật khẩu không khớp</string>
+    <string name="trophy_icon"></string>
 
     <!-- Main Navigation -->
     <string name="home">Trang chủ</string>
@@ -117,6 +118,7 @@
 
     <string name="yes">Yes</string>
     <string name="no">No</string>
+    <string name="workout_name">Tên buổi tập</string>
 
     <!-- Profile -->
     <string name="edit_profile">Chỉnh sửa hồ sơ</string>

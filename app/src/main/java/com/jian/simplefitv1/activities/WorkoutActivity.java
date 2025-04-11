@@ -21,6 +21,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
@@ -512,29 +513,43 @@ public class WorkoutActivity extends AppCompatActivity {
     }
 
     private void showWorkoutCompletionDialog() {
-        // Create dialog view
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_workout_completed, null);
+        builder.setView(dialogView);
 
-        // Set up dialog content
-        TextView tvDuration = dialogView.findViewById(R.id.tv_stats_duration);
-        TextView tvExercises = dialogView.findViewById(R.id.tv_stats_exercise_count);
+        // Initialize workout name field
+        TextInputEditText etWorkoutName = dialogView.findViewById(R.id.et_workout_name);
+        etWorkoutName.setText(currentWorkout.getRoutineName());
+
+        // Initialize stats display
+        TextView tvDuration = dialogView.findViewById(R.id.tv_workout_duration);
+        TextView tvExercisesCompleted = dialogView.findViewById(R.id.tv_exercises_completed);
+
+        // Format and set duration
+        long elapsedMillis = currentWorkout.getDuration();
+        String durationStr = formatDuration(elapsedMillis);
+        tvDuration.setText(durationStr);
+
+        // Set exercises count
+        int exerciseCount = currentWorkout.getExerciseCount();
+        tvExercisesCompleted.setText(String.valueOf(exerciseCount));
+
+        // Setup notes field
         EditText etNotes = dialogView.findViewById(R.id.et_notes);
 
-        // Set values
-        tvDuration.setText(formatDuration(currentWorkout.getDuration()));
-        tvExercises.setText(String.valueOf(currentWorkout.getExerciseCount()));
-
-        // Create dialog
-        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
-        builder.setView(dialogView)
-                .setPositiveButton(R.string.save, (dialog, which) -> {
-                    // Save notes if entered
-                    if (etNotes != null && etNotes.getText() != null) {
-                        String notes = etNotes.getText().toString().trim();
-                        if (!notes.isEmpty()) {
-                            currentWorkout.setNotes(notes);
-                        }
+        builder.setPositiveButton(R.string.save, (dialog, which) -> {
+                    // Save workout name from input field
+                    String workoutName = etWorkoutName.getText().toString().trim();
+                    if (!workoutName.isEmpty()) {
+                        currentWorkout.setRoutineName(workoutName);
                     }
+
+                    // Save notes if provided
+                    String notes = etNotes.getText().toString().trim();
+                    if (!notes.isEmpty()) {
+                        currentWorkout.setNotes(notes);
+                    }
+
                     saveWorkout();
                 })
                 .setNegativeButton(R.string.discard, (dialog, which) -> {
