@@ -107,7 +107,10 @@
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rv_workout_history"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent" />
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:padding="8dp"
+                tools:listitem="@layout/item_workout" />
 
             <TextView
                 android:id="@+id/tv_no_workouts"
@@ -116,9 +119,10 @@
                 android:layout_gravity="center"
                 android:gravity="center"
                 android:padding="16dp"
-                android:text="@string/no_history"
+                android:text="@string/no_workouts"
                 android:textSize="16sp"
-                android:visibility="gone" />
+                android:visibility="gone"
+                tools:visibility="visible" />
         </FrameLayout>
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

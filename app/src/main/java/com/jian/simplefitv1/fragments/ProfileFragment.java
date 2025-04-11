@@ -19,6 +19,7 @@ import com.bumptech.glide.Glide;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;  // Add this import
 import com.jian.simplefitv1.R;
 import com.jian.simplefitv1.activities.AuthActivity;
 import com.jian.simplefitv1.activities.EditProfileActivity;
@@ -26,6 +27,7 @@ import com.jian.simplefitv1.activities.SettingsActivity;
 import com.jian.simplefitv1.models.User;
 import com.jian.simplefitv1.models.WorkoutSummary;
 import com.jian.simplefitv1.utils.TimeUtils;
+import com.jian.simplefitv1.models.Workout;
 
 public class ProfileFragment extends Fragment {
 
@@ -133,26 +135,49 @@ public class ProfileFragment extends Fragment {
         }
     }
 
+    /**
+     * Load workout statistics from Firestore
+     */
     private void loadWorkoutSummary() {
         if (currentUser == null || !isAdded()) return;
 
         String userId = currentUser.getUid();
-        db.collection("workout_summaries").document(userId)
+
+        // Direct query to calculate statistics from workouts collection
+        db.collection("workouts")
+                .whereEqualTo("userId", userId)
+                .whereEqualTo("completed", true)
                 .get()
-                .addOnSuccessListener(documentSnapshot -> {
+                .addOnSuccessListener(queryDocumentSnapshots -> {
                     if (!isAdded()) return;
 
-                    if (documentSnapshot.exists()) {
-                        WorkoutSummary summary = documentSnapshot.toObject(WorkoutSummary.class);
-                        updateWorkoutStatsUI(summary);
-                    } else {
-                        // No workout history yet
-                        updateWorkoutStatsUI(new WorkoutSummary());
+                    // Initialize counters
+                    int totalWorkouts = 0;
+                    long totalMinutes = 0;
+                    int totalExercises = 0;
+
+                    // Calculate statistics from workout documents
+                    for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
+                        Workout workout = document.toObject(Workout.class);
+                        totalWorkouts++;
+                        totalMinutes += workout.getDuration() / 60000; // Convert ms to minutes
+                        totalExercises += workout.getExerciseCount();
                     }
+
+                    // Update UI with calculated statistics
+                    String workoutCount = String.valueOf(totalWorkouts);
+                    tvTotalWorkouts.setText(workoutCount);
+
+                    // Format total time (stored in minutes) to hours and minutes
+                    String formattedTime = String.format("%d giờ %d phút",
+                            totalMinutes / 60, totalMinutes % 60);
+                    tvTotalTime.setText(formattedTime);
                 })
                 .addOnFailureListener(e -> {
                     if (!isAdded()) return;
                     Log.e(TAG, "Lỗi khi tải thống kê tập luyện", e);
+                    tvTotalWorkouts.setText("0");
+                    tvTotalTime.setText("0 giờ 0 phút");
                 });
     }
 
