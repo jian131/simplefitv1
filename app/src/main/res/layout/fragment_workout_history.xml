@@ -14,28 +14,27 @@
         android:textSize="20sp"
         android:textStyle="bold"
         android:layout_margin="16dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"/>
 
     <!-- Workout Statistics Card -->
     <androidx.cardview.widget.CardView
-        android:id="@+id/card_statistics"
-        android:layout_width="0dp"
+        android:id="@+id/card_workout_stats"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
         app:cardCornerRadius="8dp"
         app:cardElevation="4dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tv_history_title">
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:padding="16dp">
+            android:padding="16dp"
+            android:baselineAligned="false">
 
-            <!-- Total Workouts -->
+            <!-- Workouts count -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -44,26 +43,20 @@
                 android:gravity="center">
 
                 <TextView
-                    android:id="@+id/tv_total_workouts"
+                    android:id="@+id/tv_stats_workout_count"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:text="0"
                     android:textSize="24sp"
-                    android:textStyle="bold"
-                    tools:text="15" />
+                    android:textStyle="bold"/>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Workouts"
-                    android:textSize="14sp" />
+                    android:text="Workouts"/>
             </LinearLayout>
 
-            <View
-                android:layout_width="1dp"
-                android:layout_height="match_parent"
-                android:background="@android:color/darker_gray" />
-
-            <!-- Total Duration -->
+            <!-- Total duration -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -72,59 +65,57 @@
                 android:gravity="center">
 
                 <TextView
-                    android:id="@+id/tv_total_duration"
+                    android:id="@+id/tv_stats_duration"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:text="0h 0m"
                     android:textSize="24sp"
-                    android:textStyle="bold"
-                    tools:text="480 min" />
+                    android:textStyle="bold"/>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Total Time"
-                    android:textSize="14sp" />
+                    android:text="Total Time"/>
+            </LinearLayout>
+
+            <!-- Exercises count -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <TextView
+                    android:id="@+id/tv_stats_exercise_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0"
+                    android:textSize="24sp"
+                    android:textStyle="bold"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Exercises"/>
             </LinearLayout>
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-        android:id="@+id/swipe_refresh"
+        android:id="@+id/swipe_refresh_layout"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="8dp"
+        app:layout_constraintTop_toBottomOf="@id/card_workout_stats"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/card_statistics">
+        app:layout_constraintEnd_toEndOf="parent">
 
-        <FrameLayout
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_workout_history"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rv_workouts"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:clipToPadding="false"
-                android:padding="8dp"
-                tools:listitem="@layout/item_workout"
-                tools:itemCount="5" />
-
-            <TextView
-                android:id="@+id/tv_no_workouts"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:gravity="center"
-                android:padding="16dp"
-                android:text="No workout history yet.\nComplete a workout to see it here."
-                android:textSize="16sp"
-                android:visibility="gone"
-                tools:visibility="visible" />
-
-        </FrameLayout>
-
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:padding="8dp"/>
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
-
 </androidx.constraintlayout.widget.ConstraintLayout>

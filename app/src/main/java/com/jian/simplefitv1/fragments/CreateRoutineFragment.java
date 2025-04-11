@@ -8,10 +8,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
-import static android.app.Activity.RESULT_OK;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
+import android.util.Log;
+import android.content.Context;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -22,12 +22,16 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;  // Added this import
+import com.google.firebase.firestore.WriteBatch;
 import com.jian.simplefitv1.R;
 import com.jian.simplefitv1.activities.ExerciseLibraryActivity;
-import com.jian.simplefitv1.activities.RoutineActivity;
 import com.jian.simplefitv1.adapters.RoutineExerciseAdapter;
+import com.jian.simplefitv1.data.ExerciseData;
 import com.jian.simplefitv1.models.Exercise;
 import com.jian.simplefitv1.models.Routine;
 import com.jian.simplefitv1.models.RoutineExercise;
@@ -36,6 +40,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static android.app.Activity.RESULT_OK;
 
 public class CreateRoutineFragment extends Fragment {
 
@@ -46,6 +52,7 @@ public class CreateRoutineFragment extends Fragment {
     private Button btnSaveRoutine, btnCancel;
     private RecyclerView rvExercises;
     private FloatingActionButton fabAddExercise;
+    private TextView tvNoExercises;
 
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
@@ -58,6 +65,7 @@ public class CreateRoutineFragment extends Fragment {
     private List<RoutineExercise> exerciseList = new ArrayList<>();
     private Map<String, Exercise> exerciseDetailsMap = new HashMap<>();
     private RoutineExerciseAdapter adapter;
+    private Context mContext;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -80,91 +88,147 @@ public class CreateRoutineFragment extends Fragment {
     }
 
     @Override
+    public void onAttach(@NonNull Context context) {
+        super.onAttach(context);
+        this.mContext = context;
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        this.mContext = null;
+    }
+
+    @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
         // Initialize views
         etRoutineName = view.findViewById(R.id.et_routine_name);
         etRoutineDescription = view.findViewById(R.id.et_routine_description);
-        rvExercises = view.findViewById(R.id.rv_exercises);
-        fabAddExercise = view.findViewById(R.id.fab_add_exercise);
         btnSaveRoutine = view.findViewById(R.id.btn_save_routine);
         btnCancel = view.findViewById(R.id.btn_cancel);
+        rvExercises = view.findViewById(R.id.rv_exercises);
+        fabAddExercise = view.findViewById(R.id.fab_add_exercise);
+        tvNoExercises = view.findViewById(R.id.tv_no_exercises);
 
-        // Set up RecyclerView
+        // Setup RecyclerView
         setupRecyclerView();
 
-        // Set up click listeners
+        // Setup click listeners
         setupClickListeners();
 
-        // Load routine data if in edit mode
-        if (isEditMode) {
-            loadRoutineData();
+        // Load routine data if editing
+        if (isEditMode && editRoutineId != null) {
+            loadRoutineForEditing();
+        } else {
+            showEmptyExercisesMessage();
         }
     }
 
     private void setupRecyclerView() {
+        adapter = new RoutineExerciseAdapter(getContext(), exerciseList, exerciseDetailsMap);
         rvExercises.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapter = new RoutineExerciseAdapter(getContext(), exerciseList, exerciseDetailsMap, true);
         rvExercises.setAdapter(adapter);
     }
 
     private void setupClickListeners() {
-        fabAddExercise.setOnClickListener(v -> openExerciseSelectionActivity());
         btnSaveRoutine.setOnClickListener(v -> saveRoutine());
-        btnCancel.setOnClickListener(v -> getActivity().onBackPressed());
+        if (btnCancel != null) {
+            btnCancel.setOnClickListener(v -> {
+                if (getActivity() != null) {
+                    getActivity().onBackPressed();
+                }
+            });
+        }
+        fabAddExercise.setOnClickListener(v -> openExerciseSelectionActivity());
     }
 
-    private void loadRoutineData() {
-        if (editRoutineId == null) return;
+    private void loadRoutineForEditing() {
+        if (editRoutineId == null || editRoutineId.isEmpty()) return;
 
         db.collection("routines").document(editRoutineId).get()
-            .addOnSuccessListener(documentSnapshot -> {
-                currentRoutine = documentSnapshot.toObject(Routine.class);
-                if (currentRoutine != null) {
-                    etRoutineName.setText(currentRoutine.getName());
-                    etRoutineDescription.setText(currentRoutine.getDescription());
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        currentRoutine = documentSnapshot.toObject(Routine.class);
+                        currentRoutine.setId(documentSnapshot.getId());
 
-                    // Load exercises for this routine
-                    loadRoutineExercises();
-                }
-            })
-            .addOnFailureListener(e -> {
-                Toast.makeText(getContext(), "Error loading routine: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-            });
+                        // Update UI with routine details
+                        if (currentRoutine != null) {
+                            etRoutineName.setText(currentRoutine.getName());
+                            etRoutineDescription.setText(currentRoutine.getDescription());
+
+                            // Load exercises for this routine
+                            loadRoutineExercises();
+                        }
+                    } else {
+                        Toast.makeText(getContext(), "Routine not found", Toast.LENGTH_SHORT).show();
+                        if (getActivity() != null) {
+                            getActivity().onBackPressed();
+                        }
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(getContext(), "Error loading routine: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Log.e(TAG, "Error loading routine", e);
+                });
     }
 
     private void loadRoutineExercises() {
+        if (editRoutineId == null) return;
+
         db.collection("routines").document(editRoutineId)
-            .collection("exercises").get()
-            .addOnSuccessListener(queryDocumentSnapshots -> {
-                exerciseList.clear();
+                .collection("exercises").get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    exerciseList.clear();
 
-                for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
-                    RoutineExercise exercise = document.toObject(RoutineExercise.class);
-                    exercise.setId(document.getId());
-                    exerciseList.add(exercise);
+                    for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
+                        RoutineExercise exercise = document.toObject(RoutineExercise.class);
+                        exercise.setId(document.getId());
+                        exerciseList.add(exercise);
 
-                    // Load full exercise details
-                    loadExerciseDetails(exercise.getExerciseId());
-                }
+                        // Load exercise details for each exercise
+                        loadExerciseDetails(exercise.getExerciseId());
+                    }
 
-                adapter.notifyDataSetChanged();
-            })
-            .addOnFailureListener(e -> {
-                Toast.makeText(getContext(), "Error loading exercises: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-            });
+                    adapter.notifyDataSetChanged();
+
+                    if (exerciseList.isEmpty()) {
+                        showEmptyExercisesMessage();
+                    } else {
+                        hideEmptyExercisesMessage();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(getContext(), "Error loading exercises: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Log.e(TAG, "Error loading exercises", e);
+                });
+    }
+
+    private void showEmptyExercisesMessage() {
+        if (tvNoExercises != null) {
+            tvNoExercises.setVisibility(View.VISIBLE);
+        }
+        if (rvExercises != null) {
+            rvExercises.setVisibility(View.GONE);
+        }
+    }
+
+    private void hideEmptyExercisesMessage() {
+        if (tvNoExercises != null) {
+            tvNoExercises.setVisibility(View.GONE);
+        }
+        if (rvExercises != null) {
+            rvExercises.setVisibility(View.VISIBLE);
+        }
     }
 
     private void loadExerciseDetails(String exerciseId) {
-        db.collection("exercises").document(exerciseId).get()
-            .addOnSuccessListener(documentSnapshot -> {
-                Exercise exercise = documentSnapshot.toObject(Exercise.class);
-                if (exercise != null) {
-                    exerciseDetailsMap.put(exerciseId, exercise);
-                    adapter.notifyDataSetChanged();
-                }
-            });
+        Exercise exercise = ExerciseData.getExerciseById(exerciseId);
+        if (exercise != null) {
+            exerciseDetailsMap.put(exerciseId, exercise);
+            adapter.notifyDataSetChanged();
+        }
     }
 
     private void openExerciseSelectionActivity() {
@@ -173,151 +237,162 @@ public class CreateRoutineFragment extends Fragment {
         startActivityForResult(intent, EXERCISE_SELECTION_REQUEST);
     }
 
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == EXERCISE_SELECTION_REQUEST && resultCode == RESULT_OK && data != null) {
+            String exerciseId = data.getStringExtra("EXERCISE_ID");
+            if (exerciseId != null) {
+                // Tạo RoutineExercise mới với các giá trị mặc định
+                RoutineExercise routineExercise = new RoutineExercise();
+                routineExercise.setExerciseId(exerciseId);
+                routineExercise.setOrder(exerciseList.size());
+                routineExercise.setSets(3); // Mặc định 3 hiệp
+                routineExercise.setReps(10); // Mặc định 10 lần
+
+                // Thêm vào danh sách và cập nhật adapter
+                exerciseList.add(routineExercise);
+                loadExerciseDetails(exerciseId);
+                adapter.notifyDataSetChanged();
+
+                // Ẩn thông báo "không có bài tập"
+                if (tvNoExercises != null) {
+                    tvNoExercises.setVisibility(View.GONE);
+                }
+                if (rvExercises != null) {
+                    rvExercises.setVisibility(View.VISIBLE);
+                }
+            }
+        }
+    }
+
     private void saveRoutine() {
-        String name = etRoutineName.getText().toString().trim();
-        String description = etRoutineDescription.getText().toString().trim();
-
-        if (TextUtils.isEmpty(name)) {
-            etRoutineName.setError("Name is required");
-            return;
-        }
-
-        if (exerciseList.isEmpty()) {
-            Toast.makeText(getContext(), "Add at least one exercise", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
+        // Kiểm tra người dùng đã đăng nhập hay chưa
         if (currentUser == null) {
-            Toast.makeText(getContext(), "You must be logged in", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Bạn cần đăng nhập để lưu lịch trình", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Disable buttons to prevent multiple submissions
-        btnSaveRoutine.setEnabled(false);
+        // Kiểm tra tên lịch trình
+        String name = etRoutineName.getText().toString().trim();
+        if (TextUtils.isEmpty(name)) {
+            etRoutineName.setError("Vui lòng nhập tên lịch trình");
+            return;
+        }
 
-        // Create or update routine object
+        // Kiểm tra danh sách bài tập
+        if (exerciseList.isEmpty()) {
+            Toast.makeText(getContext(), "Vui lòng thêm ít nhất một bài tập", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Tạo đối tượng Routine mới hoặc cập nhật hiện có
         Routine routine;
         if (isEditMode && currentRoutine != null) {
             routine = currentRoutine;
             routine.setName(name);
-            routine.setDescription(description);
+            routine.setDescription(etRoutineDescription.getText().toString().trim());
+            routine.setExerciseCount(exerciseList.size());
             routine.setUpdatedAt(System.currentTimeMillis());
         } else {
             routine = new Routine();
-            routine.setUserId(currentUser.getUid());
             routine.setName(name);
-            routine.setDescription(description);
+            routine.setDescription(etRoutineDescription.getText().toString().trim());
+            routine.setUserId(currentUser.getUid());
+            routine.setExerciseCount(exerciseList.size());
             routine.setCreatedAt(System.currentTimeMillis());
             routine.setUpdatedAt(System.currentTimeMillis());
         }
 
-        // Calculate estimated time
-        int estimatedMinutes = 0;
-        for (RoutineExercise exercise : exerciseList) {
-            // Each set takes roughly 1 minute
-            estimatedMinutes += exercise.getSets() * 1;
-        }
-        routine.setEstimatedMinutes(estimatedMinutes);
+        // Ước tính thời gian (5 phút mỗi bài tập)
+        routine.setEstimatedMinutes(exerciseList.size() * 5);
 
-        // Save to Firestore
-        final DocumentReference routineRef;
-        if (isEditMode) {
+        // Lưu lịch trình vào Firestore
+        DocumentReference routineRef;
+        if (isEditMode && editRoutineId != null) {
             routineRef = db.collection("routines").document(editRoutineId);
         } else {
             routineRef = db.collection("routines").document();
         }
 
         routineRef.set(routine)
-            .addOnSuccessListener(aVoid -> {
-                String routineId = routineRef.getId();
-
-                // Save all exercises
-                saveExercisesToRoutine(routineId);
-            })
-            .addOnFailureListener(e -> {
-                btnSaveRoutine.setEnabled(true);
-                Toast.makeText(getContext(), "Error saving routine: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-            });
-    }
-
-    private void saveExercisesToRoutine(String routineId) {
-        // First, delete existing exercises if in edit mode
-        if (isEditMode) {
-            db.collection("routines").document(routineId)
-                .collection("exercises")
-                .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    // Delete each exercise document
-                    for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
-                        document.getReference().delete();
-                    }
-
-                    // Now add the new/updated exercises
-                    addExercisesToRoutine(routineId);
-                })
-                .addOnFailureListener(e -> {
-                    btnSaveRoutine.setEnabled(true);
-                    Toast.makeText(getContext(), "Error updating exercises: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                });
-        } else {
-            // Just add the exercises
-            addExercisesToRoutine(routineId);
-        }
-    }
-
-    private void addExercisesToRoutine(String routineId) {
-        // Counter to track completed operations
-        final int[] completedCount = {0};
-        final int totalExercises = exerciseList.size();
-
-        for (RoutineExercise exercise : exerciseList) {
-            DocumentReference exerciseRef = db.collection("routines").document(routineId)
-                .collection("exercises").document();
-
-            exerciseRef.set(exercise)
                 .addOnSuccessListener(aVoid -> {
-                    completedCount[0]++;
-
-                    // Check if all exercises have been saved
-                    if (completedCount[0] == totalExercises) {
-                        btnSaveRoutine.setEnabled(true);
-                        Toast.makeText(getContext(), isEditMode ? "Routine updated" : "Routine created", Toast.LENGTH_SHORT).show();
-
-                        // Navigate to routine detail
-                        Intent intent = new Intent(getActivity(), RoutineActivity.class);
-                        intent.putExtra("ROUTINE_ID", routineId);
-                        startActivity(intent);
-
-                        // Go back to routines list
-                        getActivity().getSupportFragmentManager().popBackStack();
-                    }
+                    // Lưu bài tập cho lịch trình
+                    saveExercisesToRoutine(routineRef);
                 })
                 .addOnFailureListener(e -> {
-                    btnSaveRoutine.setEnabled(true);
-                    Toast.makeText(getContext(), "Error saving exercise: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "Lỗi khi lưu lịch trình: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
+    }
+
+    private void saveExercisesToRoutine(DocumentReference routineRef) {
+        // Trước tiên, xóa tất cả bài tập hiện có nếu đang ở chế độ chỉnh sửa
+        if (isEditMode) {
+            routineRef.collection("exercises")
+                    .get()
+                    .addOnSuccessListener(queryDocumentSnapshots -> {
+                        // Xóa từng bài tập
+                        for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
+                            document.getReference().delete();
+                        }
+
+                        // Sau đó thêm các bài tập mới
+                        addExercisesToRoutine(routineRef);
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(getContext(), "Lỗi khi cập nhật bài tập: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    });
+        } else {
+            // Nếu là lịch trình mới, thêm trực tiếp bài tập
+            addExercisesToRoutine(routineRef);
         }
     }
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == EXERCISE_SELECTION_REQUEST && resultCode == RESULT_OK) {
-            if (data != null) {
-                String exerciseId = data.getStringExtra("EXERCISE_ID");
-                if (exerciseId != null) {
-                    // Add exercise to list
-                    RoutineExercise routineExercise = new RoutineExercise();
-                    routineExercise.setExerciseId(exerciseId);
-                    routineExercise.setOrder(exerciseList.size());
-                    routineExercise.setSets(3); // Default 3 sets
-                    routineExercise.setReps(10); // Default 10 reps
+    private void addExercisesToRoutine(DocumentReference routineRef) {
+        if (!isAdded() || getContext() == null) {
+            Log.w(TAG, "Fragment not attached, cannot add exercises to routine");
+            return;
+        }
 
-                    exerciseList.add(routineExercise);
-                    loadExerciseDetails(exerciseId);
-                    adapter.notifyDataSetChanged();
-                }
-            }
+        // Get reference to the exercises collection
+        CollectionReference exercisesRef = routineRef.collection("exercises");
+
+        // Get Firestore instance
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        // Create a new batch
+        WriteBatch batch = db.batch();
+
+        // Add each exercise to the batch
+        for (int i = 0; i < exerciseList.size(); i++) {  // Fixed: changed exercises to exerciseList
+            RoutineExercise exercise = exerciseList.get(i);  // Fixed: changed exercises to exerciseList
+            exercise.setOrder(i); // Ensure order is set correctly
+            DocumentReference docRef = exercisesRef.document();
+            batch.set(docRef, exercise);
+        }
+
+        // Commit the batch
+        batch.commit()
+                .addOnSuccessListener(aVoid -> {
+                    if (isAdded() && getContext() != null) {
+                        Toast.makeText(getContext(), "Đã lưu lịch trình thành công", Toast.LENGTH_SHORT).show();
+                        if (getActivity() != null && !getActivity().isFinishing()) {
+                            getActivity().onBackPressed();
+                        }
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    if (isAdded() && getContext() != null) {
+                        Toast.makeText(getContext(), "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                    Log.e(TAG, "Error adding exercises to routine", e);
+                });
+    }
+
+    // Add helper method for showing toasts safely
+    private void showToast(String message) {
+        if (isAdded() && getContext() != null) {
+            Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
         }
     }
 

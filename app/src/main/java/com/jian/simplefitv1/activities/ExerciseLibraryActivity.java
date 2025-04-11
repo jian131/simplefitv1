@@ -17,20 +17,30 @@ public class ExerciseLibraryActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_exercise_library);
 
-        // Set up the toolbar
+        // Thiết lập toolbar
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle("Exercise Library");
+            getSupportActionBar().setTitle("Thư viện bài tập");
         }
 
-        // Add the Exercise Library Fragment
+        // Đọc chế độ lựa chọn từ intent
+        boolean isSelectionMode = getIntent().getBooleanExtra("SELECTION_MODE", false);
+
+        // Thêm Fragment Exercise Library
         if (savedInstanceState == null) {
             ExerciseLibraryFragment fragment = new ExerciseLibraryFragment();
-            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-            transaction.replace(R.id.fragment_container, fragment);
-            transaction.commit();
+
+            // Truyền chế độ lựa chọn cho fragment
+            Bundle args = new Bundle();
+            args.putBoolean("SELECTION_MODE", isSelectionMode);
+            fragment.setArguments(args);
+
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, fragment)
+                    .commit();
         }
     }
 

@@ -1,5 +1,6 @@
 package com.jian.simplefitv1.fragments;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
@@ -31,6 +32,8 @@ public class ExerciseLibraryFragment extends Fragment implements
         ExerciseAdapter.OnExerciseClickListener,
         MuscleGroupAdapter.OnMuscleGroupClickListener {
 
+    private boolean isSelectionMode = false;
+
     private RecyclerView rvExercises;
     private RecyclerView rvMuscleGroups;
     private ExerciseAdapter exerciseAdapter;
@@ -39,6 +42,16 @@ public class ExerciseLibraryFragment extends Fragment implements
 
     private List<Exercise> allExercises = new ArrayList<>();
     private String selectedMuscleGroup = null;
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        // Đọc chế độ lựa chọn từ arguments
+        if (getArguments() != null) {
+            isSelectionMode = getArguments().getBoolean("SELECTION_MODE", false);
+        }
+    }
 
     @Nullable
     @Override
@@ -50,22 +63,46 @@ public class ExerciseLibraryFragment extends Fragment implements
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Initialize views
+        // Khởi tạo các view
         rvExercises = view.findViewById(R.id.rv_exercises);
         rvMuscleGroups = view.findViewById(R.id.rv_muscle_groups);
         etSearch = view.findViewById(R.id.et_search);
 
-        // Set up exercise RecyclerView
-        rvExercises.setLayoutManager(new LinearLayoutManager(getContext()));
+        // Thiết lập RecyclerView cho danh sách bài tập
+        setupExerciseRecyclerView();
 
-        // Set up muscle group RecyclerView
-        rvMuscleGroups.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
+        // Thiết lập RecyclerView cho danh sách nhóm cơ
+        setupMuscleGroupsRecyclerView();
 
-        // Load data
+        // Tải dữ liệu
         loadExercises();
         loadMuscleGroups();
 
-        // Set up search
+        // Thiết lập tìm kiếm
+        setupSearch();
+    }
+
+    private void setupExerciseRecyclerView() {
+        rvExercises.setLayoutManager(new LinearLayoutManager(getContext()));
+    }
+
+    private void setupMuscleGroupsRecyclerView() {
+        rvMuscleGroups.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
+    }
+
+    private void loadExercises() {
+        allExercises = ExerciseData.getAllExercises();
+        exerciseAdapter = new ExerciseAdapter(getContext(), allExercises, this);
+        rvExercises.setAdapter(exerciseAdapter);
+    }
+
+    private void loadMuscleGroups() {
+        List<MuscleGroup> muscleGroups = MuscleGroupData.getAllMuscleGroups();
+        muscleGroupAdapter = new MuscleGroupAdapter(getContext(), muscleGroups, this);
+        rvMuscleGroups.setAdapter(muscleGroupAdapter);
+    }
+
+    private void setupSearch() {
         etSearch.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -80,31 +117,15 @@ public class ExerciseLibraryFragment extends Fragment implements
         });
     }
 
-    private void loadExercises() {
-        // In a real app, this would come from Firebase/database
-        allExercises = ExerciseData.getAllExercises();
-
-        exerciseAdapter = new ExerciseAdapter(getContext(), allExercises, this);
-        rvExercises.setAdapter(exerciseAdapter);
-    }
-
-    private void loadMuscleGroups() {
-        // In a real app, this would come from Firebase/database
-        List<MuscleGroup> muscleGroups = MuscleGroupData.getAllMuscleGroups();
-
-        muscleGroupAdapter = new MuscleGroupAdapter(getContext(), muscleGroups, this);
-        rvMuscleGroups.setAdapter(muscleGroupAdapter);
-    }
-
     private void filterExercises(String query) {
         List<Exercise> filteredList = new ArrayList<>();
 
         for (Exercise exercise : allExercises) {
-            // Filter by search query
+            // Lọc theo từ khóa tìm kiếm
             boolean matchesQuery = query.isEmpty() ||
                     exercise.getName().toLowerCase().contains(query.toLowerCase());
 
-            // Filter by selected muscle group
+            // Lọc theo nhóm cơ được chọn
             boolean matchesMuscleGroup = selectedMuscleGroup == null ||
                     exercise.getMuscleGroups().contains(selectedMuscleGroup);
 
@@ -118,16 +139,29 @@ public class ExerciseLibraryFragment extends Fragment implements
 
     @Override
     public void onExerciseClick(Exercise exercise) {
-        // Navigate to exercise detail
-        Intent intent = new Intent(getActivity(), ExerciseDetailActivity.class);
-        intent.putExtra(ExerciseDetailActivity.EXTRA_EXERCISE_ID, exercise.getId());
-        startActivity(intent);
+        // Xử lý hành vi khác nhau tùy theo chế độ
+        if (isSelectionMode) {
+            // Trả về bài tập đã chọn cho activity gọi
+            Intent resultIntent = new Intent();
+            resultIntent.putExtra("EXERCISE_ID", exercise.getId());
+            requireActivity().setResult(Activity.RESULT_OK, resultIntent);
+            requireActivity().finish();
+        } else {
+            // Mở màn hình chi tiết bài tập (hành vi mặc định)
+            Intent intent = new Intent(getActivity(), ExerciseDetailActivity.class);
+            intent.putExtra(ExerciseDetailActivity.EXTRA_EXERCISE_ID, exercise.getId());
+            startActivity(intent);
+        }
     }
 
     @Override
     public void onMuscleGroupClick(MuscleGroup muscleGroup) {
-        // Filter exercises by muscle group
-        selectedMuscleGroup = muscleGroup.getId();
+        // Lọc bài tập theo nhóm cơ
+        if (muscleGroup == null) {
+            selectedMuscleGroup = null;
+        } else {
+            selectedMuscleGroup = muscleGroup.getId();
+        }
         filterExercises(etSearch.getText().toString());
     }
 }

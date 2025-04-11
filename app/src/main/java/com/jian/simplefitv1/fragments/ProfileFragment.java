@@ -1,7 +1,6 @@
 package com.jian.simplefitv1.fragments;
 
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -19,10 +18,7 @@ import androidx.fragment.app.Fragment;
 import com.bumptech.glide.Glide;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
 import com.jian.simplefitv1.R;
 import com.jian.simplefitv1.activities.AuthActivity;
 import com.jian.simplefitv1.activities.EditProfileActivity;
@@ -34,7 +30,6 @@ import com.jian.simplefitv1.utils.TimeUtils;
 public class ProfileFragment extends Fragment {
 
     private static final String TAG = "ProfileFragment";
-    private static final int PICK_IMAGE_REQUEST = 1;
 
     // UI elements
     private ImageView ivProfilePicture;
@@ -47,14 +42,12 @@ public class ProfileFragment extends Fragment {
     private FirebaseFirestore db;
     private FirebaseUser currentUser;
     private User userProfile;
-    private StorageReference storageRef;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
-        storageRef = FirebaseStorage.getInstance().getReference();
         currentUser = mAuth.getCurrentUser();
     }
 
@@ -69,6 +62,17 @@ public class ProfileFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         // Initialize UI components
+        initializeViews(view);
+
+        // Set click listeners
+        setupClickListeners();
+
+        // Load user data
+        loadUserProfile();
+        loadWorkoutSummary();
+    }
+
+    private void initializeViews(View view) {
         ivProfilePicture = view.findViewById(R.id.iv_profile_picture);
         tvDisplayName = view.findViewById(R.id.tv_display_name);
         tvEmail = view.findViewById(R.id.tv_email);
@@ -79,17 +83,17 @@ public class ProfileFragment extends Fragment {
         btnSettings = view.findViewById(R.id.btn_settings);
         btnLogout = view.findViewById(R.id.btn_logout);
 
-        // Set click listeners
+        // Always load default profile image since we don't use Firebase Storage
+        loadDefaultProfileImage();
+    }
+
+    private void setupClickListeners() {
         btnEditProfile.setOnClickListener(v -> navigateToEditProfile());
         btnSettings.setOnClickListener(v -> navigateToSettings());
         btnLogout.setOnClickListener(v -> logoutUser());
 
-        // Profile picture click - allow changing
-        ivProfilePicture.setOnClickListener(v -> chooseProfilePicture());
-
-        // Load user data
-        loadUserProfile();
-        loadWorkoutSummary();
+        // No action for profile picture click as we don't support image uploads
+        ivProfilePicture.setOnClickListener(v -> showToast("Chức năng thay đổi ảnh đại diện không có sẵn"));
     }
 
     private void loadUserProfile() {
@@ -102,6 +106,8 @@ public class ProfileFragment extends Fragment {
         db.collection("users").document(userId)
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
+                    if (!isAdded()) return; // Fragment not attached to activity
+
                     if (documentSnapshot.exists()) {
                         userProfile = documentSnapshot.toObject(User.class);
                         updateProfileUI();
@@ -111,45 +117,31 @@ public class ProfileFragment extends Fragment {
                     }
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Lỗi khi tải hồ sơ người dùng", e);
-                    Toast.makeText(getContext(), "Lỗi tải hồ sơ: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                });
+                    if (!isAdded()) return;
 
-        // Load profile picture
-        loadProfilePicture(userId);
+                    Log.e(TAG, "Lỗi khi tải hồ sơ người dùng", e);
+                    showToast("Lỗi tải hồ sơ: " + e.getMessage());
+                });
     }
 
-    private void loadProfilePicture(String userId) {
-        StorageReference profileRef = storageRef.child("profile_images/" + userId + "/profile.jpg");
-        profileRef.getDownloadUrl()
-                .addOnSuccessListener(uri -> {
-                    if (getContext() != null && ivProfilePicture != null) {
-                        Glide.with(getContext())
-                                .load(uri)
-                                .placeholder(R.drawable.default_profile_image)
-                                .error(R.drawable.default_profile_image)
-                                .circleCrop()
-                                .into(ivProfilePicture);
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    // Use default image
-                    if (getContext() != null && ivProfilePicture != null) {
-                        Glide.with(getContext())
-                                .load(R.drawable.default_profile_image)
-                                .circleCrop()
-                                .into(ivProfilePicture);
-                    }
-                });
+    private void loadDefaultProfileImage() {
+        if (isAdded() && ivProfilePicture != null) {
+            Glide.with(requireContext())
+                    .load(R.drawable.default_profile_image)
+                    .circleCrop()
+                    .into(ivProfilePicture);
+        }
     }
 
     private void loadWorkoutSummary() {
-        if (currentUser == null) return;
+        if (currentUser == null || !isAdded()) return;
 
         String userId = currentUser.getUid();
         db.collection("workout_summaries").document(userId)
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
+                    if (!isAdded()) return;
+
                     if (documentSnapshot.exists()) {
                         WorkoutSummary summary = documentSnapshot.toObject(WorkoutSummary.class);
                         updateWorkoutStatsUI(summary);
@@ -159,15 +151,15 @@ public class ProfileFragment extends Fragment {
                     }
                 })
                 .addOnFailureListener(e -> {
+                    if (!isAdded()) return;
                     Log.e(TAG, "Lỗi khi tải thống kê tập luyện", e);
                 });
     }
 
     private void createNewUserProfile() {
-        if (currentUser == null) return;
+        if (currentUser == null || !isAdded()) return;
 
         User newUser = new User();
-        // Sửa setUid thành setUserId
         newUser.setUserId(currentUser.getUid());
         newUser.setEmail(currentUser.getEmail());
         newUser.setDisplayName(currentUser.getDisplayName() != null ?
@@ -177,28 +169,33 @@ public class ProfileFragment extends Fragment {
         db.collection("users").document(currentUser.getUid())
                 .set(newUser)
                 .addOnSuccessListener(aVoid -> {
+                    if (!isAdded()) return;
+
                     userProfile = newUser;
                     updateProfileUI();
+                    showToast("Đã tạo hồ sơ mới");
                 })
                 .addOnFailureListener(e -> {
+                    if (!isAdded()) return;
+
                     Log.e(TAG, "Lỗi khi tạo hồ sơ mới", e);
+                    showToast("Lỗi khi tạo hồ sơ: " + e.getMessage());
                 });
     }
 
     private void updateProfileUI() {
-        if (userProfile != null && getView() != null) {
+        if (userProfile != null && isAdded()) {
             tvDisplayName.setText(userProfile.getDisplayName());
             tvEmail.setText(userProfile.getEmail());
 
-            // Format the timestamp to a readable date
-            // Sửa formatTimestamp thành formatDate
+            // Format the timestamp to a readable date using TimeUtils
             String memberSince = "Thành viên từ: " + TimeUtils.formatDate(userProfile.getCreatedAt());
             tvMemberSince.setText(memberSince);
         }
     }
 
     private void updateWorkoutStatsUI(WorkoutSummary summary) {
-        if (getView() == null) return;
+        if (!isAdded()) return;
 
         tvTotalWorkouts.setText(String.valueOf(summary.getTotalWorkouts()));
 
@@ -209,79 +206,39 @@ public class ProfileFragment extends Fragment {
         tvTotalTime.setText(formattedTime);
     }
 
-    private void chooseProfilePicture() {
-        Intent intent = new Intent();
-        intent.setType("image/*");
-        intent.setAction(Intent.ACTION_GET_CONTENT);
-        startActivityForResult(Intent.createChooser(intent, "Chọn ảnh đại diện"), PICK_IMAGE_REQUEST);
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (requestCode == PICK_IMAGE_REQUEST && resultCode == getActivity().RESULT_OK
-                && data != null && data.getData() != null) {
-            Uri imageUri = data.getData();
-            uploadProfilePicture(imageUri);
-        }
-    }
-
-    private void uploadProfilePicture(Uri imageUri) {
-        if (currentUser == null) return;
-
-        // Show loading indicator
-        Toast.makeText(getContext(), "Đang tải ảnh lên...", Toast.LENGTH_SHORT).show();
-
-        StorageReference profileRef = storageRef.child("profile_images/" + currentUser.getUid() + "/profile.jpg");
-
-        profileRef.putFile(imageUri)
-                .addOnSuccessListener(taskSnapshot -> {
-                    // Get download URL and update profile
-                    profileRef.getDownloadUrl().addOnSuccessListener(uri -> {
-                        // Update user profile with new image URL
-                        db.collection("users").document(currentUser.getUid())
-                                .update("profileImageUrl", uri.toString())
-                                .addOnSuccessListener(aVoid -> {
-                                    Toast.makeText(getContext(), "Đã cập nhật ảnh đại diện", Toast.LENGTH_SHORT).show();
-
-                                    // Update image in UI
-                                    if (getContext() != null) {
-                                        Glide.with(getContext())
-                                                .load(uri)
-                                                .circleCrop()
-                                                .into(ivProfilePicture);
-                                    }
-                                });
-                    });
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(getContext(), "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                    Log.e(TAG, "Error uploading profile picture", e);
-                });
-    }
-
     private void navigateToEditProfile() {
+        if (!isAdded() || getActivity() == null) return;
+
         Intent intent = new Intent(getActivity(), EditProfileActivity.class);
         startActivity(intent);
     }
 
     private void navigateToSettings() {
+        if (!isAdded() || getActivity() == null) return;
+
         Intent intent = new Intent(getActivity(), SettingsActivity.class);
         startActivity(intent);
     }
 
     private void logoutUser() {
+        if (!isAdded()) return;
+
         mAuth.signOut();
         navigateToLogin();
     }
 
     private void navigateToLogin() {
-        if (getActivity() != null) {
-            Intent intent = new Intent(getActivity(), AuthActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            startActivity(intent);
-            getActivity().finish();
+        if (!isAdded() || getActivity() == null) return;
+
+        Intent intent = new Intent(getActivity(), AuthActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        getActivity().finish();
+    }
+
+    private void showToast(String message) {
+        if (isAdded() && getContext() != null) {
+            Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -289,7 +246,7 @@ public class ProfileFragment extends Fragment {
     public void onResume() {
         super.onResume();
         // Reload user profile in case it was updated
-        if (currentUser != null) {
+        if (isAdded() && currentUser != null) {
             loadUserProfile();
             loadWorkoutSummary();
         }

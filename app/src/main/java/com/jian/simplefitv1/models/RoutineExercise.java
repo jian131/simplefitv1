@@ -1,4 +1,5 @@
 package com.jian.simplefitv1.models;
+import com.google.firebase.firestore.Exclude;
 
 /**
  * Model class linking exercises to routines with specific configuration
@@ -12,6 +13,7 @@ public class RoutineExercise {
     private float weight;
     private int restSeconds;
     private String notes;
+
 
     /**
      * Required empty constructor for Firestore
@@ -49,6 +51,27 @@ public class RoutineExercise {
         this.sets = sets;
         this.reps = reps;
     }
+
+    /**
+     * Get a formatted string representation of the sets and reps
+     * @return String in format "3 x 10"
+     */
+    @Exclude
+    public String getSetsRepsString() {
+        return sets + " x " + reps;
+    }
+
+    /**
+     * Get a formatted string representation of the weight
+     * @return String in format "10 kg" or empty string if weight is 0
+     */
+    @Exclude
+    public String getWeightString() {
+        if (weight <= 0) return "";
+        return weight + " kg";
+    }
+
+
 
     // Getters and setters
     public String getId() {
@@ -115,21 +138,11 @@ public class RoutineExercise {
         this.notes = notes;
     }
 
+
     /**
      * Get a formatted string representation of the sets and reps
      * @return String in format "3 x 10"
      */
-    public String getSetsRepsString() {
-        return sets + " x " + reps;
-    }
-
-    /**
-     * Get a formatted string representation of the weight
-     * @return String in format "10 kg" or empty string if weight is 0
-     */
-    public String getWeightString() {
-        return weight > 0 ? weight + " kg" : "";
-    }
 
     @Override
     public String toString() {

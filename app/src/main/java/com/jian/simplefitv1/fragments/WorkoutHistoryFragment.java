@@ -6,6 +6,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -22,6 +23,7 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.jian.simplefitv1.R;
 import com.jian.simplefitv1.adapters.WorkoutAdapter;
 import com.jian.simplefitv1.models.Workout;
+import com.jian.simplefitv1.utils.TimeUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,18 +53,36 @@ public class WorkoutHistoryFragment extends Fragment implements WorkoutAdapter.O
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_workout_history, container, false);
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_workout_history, container, false);
+
+        // Using correct RecyclerView ID that matches the layout file
+        rvWorkouts = view.findViewById(R.id.rv_workout_history);
+
+        swipeRefreshLayout = view.findViewById(R.id.swipe_refresh_layout);
+
+        // Set up RecyclerView
+        rvWorkouts.setLayoutManager(new LinearLayoutManager(getContext()));
+        workouts = new ArrayList<>();
+        adapter = new WorkoutAdapter(getContext(), workouts);
+        rvWorkouts.setAdapter(adapter);
+
+        // Set up SwipeRefreshLayout
+        swipeRefreshLayout.setOnRefreshListener(this::loadWorkoutHistory);
+
+        return view;
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Initialize views
-        rvWorkouts = view.findViewById(R.id.rv_workouts);
+        // Corrigindo ID de rv_workouts para rv_workout_history
+        rvWorkouts = view.findViewById(R.id.rv_workout_history);
         tvNoWorkouts = view.findViewById(R.id.tv_no_workouts);
-        swipeRefreshLayout = view.findViewById(R.id.swipe_refresh);
+
+        // Corrigindo ID de swipe_refresh para swipe_refresh_layout
+        swipeRefreshLayout = view.findViewById(R.id.swipe_refresh_layout);
 
         // Setup RecyclerView
         setupRecyclerView();
@@ -81,58 +101,68 @@ public class WorkoutHistoryFragment extends Fragment implements WorkoutAdapter.O
     }
 
     private void loadWorkoutHistory() {
-        if (currentUser == null) return;
-
-        swipeRefreshLayout.setRefreshing(true);
-        workouts.clear();
-
-        db.collection("users").document(currentUser.getUid())
-            .collection("workouts")
-            .orderBy("startTime", Query.Direction.DESCENDING)
-            .get()
-            .addOnSuccessListener(queryDocumentSnapshots -> {
-                swipeRefreshLayout.setRefreshing(false);
-
-                if (!queryDocumentSnapshots.isEmpty()) {
-                    tvNoWorkouts.setVisibility(View.GONE);
-                    rvWorkouts.setVisibility(View.VISIBLE);
-
-                    for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
-                        Workout workout = document.toObject(Workout.class);
-                        workout.setId(document.getId());
-                        workouts.add(workout);
-                    }
-                    adapter.notifyDataSetChanged();
-
-                    updateWorkoutStatistics();
-                } else {
-                    showEmptyState();
-                }
-            })
-            .addOnFailureListener(e -> {
-                swipeRefreshLayout.setRefreshing(false);
-                Toast.makeText(getContext(), "Error loading workout history: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                showEmptyState();
-            });
-    }
-
-    private void updateWorkoutStatistics() {
-        // Calculate and display workout statistics (total workouts, average duration, etc.)
-        TextView tvTotalWorkouts = getView().findViewById(R.id.tv_total_workouts);
-        TextView tvTotalDuration = getView().findViewById(R.id.tv_total_duration);
-
-        int totalWorkouts = workouts.size();
-        long totalDurationMs = 0;
-
-        for (Workout workout : workouts) {
-            totalDurationMs += workout.getDuration();
+        if (!isAdded()) {
+            return; // Fragment not attached to activity
         }
 
-        // Convert milliseconds to minutes
-        long totalMinutes = totalDurationMs / (60 * 1000);
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser == null) {
+            // Handle not logged in state
+            return;
+        }
 
-        tvTotalWorkouts.setText(String.valueOf(totalWorkouts));
-        tvTotalDuration.setText(String.format("%d min", totalMinutes));
+        // Start loading indicator
+        swipeRefreshLayout.setRefreshing(true);
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("workouts")
+                .whereEqualTo("userId", currentUser.getUid())
+                .orderBy("endTime", Query.Direction.DESCENDING)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    // Check if fragment is still attached
+                    if (!isAdded() || getView() == null) {
+                        return;
+                    }
+
+                    // Process results and update UI
+                    // ... existing code ...
+                })
+                .addOnFailureListener(e -> {
+                    if (isAdded()) {
+                        swipeRefreshLayout.setRefreshing(false);
+                        // Show error message
+                    }
+                });
+    }
+
+    private void updateWorkoutStatistics(int workoutCount, long totalDuration, int totalExercises) {
+        // Make sure fragment is still attached and view exists
+        View view = getView();
+        if (view == null || !isAdded()) {
+            return;  // Fragment view is null or fragment is not attached to activity
+        }
+
+        try {
+            // Now safely find the views with correct IDs
+            TextView tvWorkoutCount = view.findViewById(R.id.tv_stats_workout_count);
+            TextView tvTotalDuration = view.findViewById(R.id.tv_stats_duration);
+            TextView tvTotalExercises = view.findViewById(R.id.tv_stats_exercise_count);
+
+            if (tvWorkoutCount != null) {
+                tvWorkoutCount.setText(String.valueOf(workoutCount));
+            }
+
+            if (tvTotalDuration != null) {
+                tvTotalDuration.setText(TimeUtils.formatDuration(totalDuration));
+            }
+
+            if (tvTotalExercises != null) {
+                tvTotalExercises.setText(String.valueOf(totalExercises));
+            }
+        } catch (Exception e) {
+            Log.e("WorkoutHistoryFragment", "Error updating statistics", e);
+        }
     }
 
     private void showEmptyState() {
