@@ -22,7 +22,7 @@ SimpleFit là ứng dụng di động giúp người dùng theo dõi quá trình
 
 ## 🖼️ Screenshots
 
-*Hãy thêm hình ảnh ứng dụng vào đây*
+*cập nhật...*
 
 ## 🛠️ Công nghệ sử dụng
 
