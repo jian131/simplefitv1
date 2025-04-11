@@ -74,6 +74,7 @@
         <activity
             android:name=".activities.RoutineActivity"
             android:exported="false"
+            android:theme="@style/Theme.SimpleFit.NoActionBar"
             android:parentActivityName=".activities.MainActivity" />
 
         <!-- CreateRoutineActivity -->
@@ -86,6 +87,7 @@
         <activity
             android:name=".activities.EditProfileActivity"
             android:exported="false"
+            android:theme="@style/Theme.SimpleFit.NoActionBar"
             android:parentActivityName=".activities.ProfileActivity" />
 
     </application>
