@@ -60,6 +60,11 @@ public class ExerciseLibraryFragment extends Fragment implements
     }
 
     @Override
+    public void onExerciseRemove(Exercise exercise, int position) {
+        // In the library view, we don't actually need to implement removal functionality
+        // This is just here to satisfy the interface requirement
+    }
+    @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
@@ -121,11 +126,11 @@ public class ExerciseLibraryFragment extends Fragment implements
         List<Exercise> filteredList = new ArrayList<>();
 
         for (Exercise exercise : allExercises) {
-            // Lọc theo từ khóa tìm kiếm
+            // Filter by search query
             boolean matchesQuery = query.isEmpty() ||
                     exercise.getName().toLowerCase().contains(query.toLowerCase());
 
-            // Lọc theo nhóm cơ được chọn
+            // Filter by selected muscle group
             boolean matchesMuscleGroup = selectedMuscleGroup == null ||
                     exercise.getMuscleGroups().contains(selectedMuscleGroup);
 
@@ -134,7 +139,8 @@ public class ExerciseLibraryFragment extends Fragment implements
             }
         }
 
-        exerciseAdapter.filterList(filteredList);
+        // Change this line from exerciseAdapter.filterList(filteredList); to:
+        exerciseAdapter.updateData(filteredList);
     }
 
     @Override

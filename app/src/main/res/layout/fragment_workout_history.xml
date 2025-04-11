@@ -109,8 +109,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:clipToPadding="false"
-                android:padding="8dp"
-                tools:listitem="@layout/item_workout" />
+                android:padding="8dp"/>
 
             <TextView
                 android:id="@+id/tv_no_workouts"
@@ -119,10 +118,9 @@
                 android:layout_gravity="center"
                 android:gravity="center"
                 android:padding="16dp"
-                android:text="@string/no_workouts"
+                android:text="@string/no_history"
                 android:textSize="16sp"
-                android:visibility="gone"
-                tools:visibility="visible" />
+                android:visibility="gone"/>
         </FrameLayout>
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

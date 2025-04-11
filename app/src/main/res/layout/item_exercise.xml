@@ -26,52 +26,60 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
-            tools:src="@tools:sample/avatars" />
+            tools:src="@drawable/exercise_bench_press" />
 
         <TextView
             android:id="@+id/tv_exercise_name"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:layout_marginTop="12dp"
-            android:layout_marginEnd="16dp"
+            android:layout_marginEnd="8dp"
             android:textSize="16sp"
             android:textStyle="bold"
-            android:maxLines="2"
-            android:ellipsize="end"
-            app:layout_constraintStart_toEndOf="@id/iv_exercise_image"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            tools:text="Push-up" />
+            app:layout_constraintStart_toEndOf="@id/iv_exercise_image"
+            app:layout_constraintEnd_toStartOf="@id/btn_remove_exercise"
+            android:layout_marginTop="16dp"
+            tools:text="Bench Press" />
 
         <TextView
-            android:id="@+id/tv_muscle_groups"
+            android:id="@+id/tv_exercise_target"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
             android:layout_marginTop="4dp"
-            android:layout_marginEnd="16dp"
-            android:textSize="14sp"
-            android:maxLines="2"
-            android:ellipsize="end"
-            app:layout_constraintStart_toEndOf="@id/iv_exercise_image"
+            android:layout_marginEnd="8dp"
             app:layout_constraintTop_toBottomOf="@id/tv_exercise_name"
-            app:layout_constraintEnd_toEndOf="parent"
-            tools:text="Chest, Shoulders, Triceps" />
+            app:layout_constraintStart_toStartOf="@id/tv_exercise_name"
+            app:layout_constraintEnd_toStartOf="@id/btn_remove_exercise"
+            tools:text="Chest" />
 
         <TextView
-            android:id="@+id/tv_difficulty"
-            android:layout_width="wrap_content"
+            android:id="@+id/tv_exercise_difficulty"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
             android:layout_marginTop="4dp"
-            android:layout_marginBottom="12dp"
-            android:textSize="12sp"
-            android:textStyle="italic"
-            app:layout_constraintStart_toEndOf="@id/iv_exercise_image"
-            app:layout_constraintTop_toBottomOf="@id/tv_muscle_groups"
+            android:layout_marginBottom="16dp"
+            android:layout_marginEnd="8dp"
+            app:layout_constraintTop_toBottomOf="@id/tv_exercise_target"
+            app:layout_constraintStart_toStartOf="@id/tv_exercise_name"
+            app:layout_constraintEnd_toStartOf="@id/btn_remove_exercise"
             app:layout_constraintBottom_toBottomOf="parent"
-            tools:text="Beginner" />
+            tools:text="Intermediate" />
+
+        <ImageButton
+            android:id="@+id/btn_remove_exercise"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginEnd="8dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Remove exercise"
+            android:src="@drawable/ic_delete"
+            android:tint="@color/text_secondary"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:visibility="visible" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.cardview.widget.CardView>

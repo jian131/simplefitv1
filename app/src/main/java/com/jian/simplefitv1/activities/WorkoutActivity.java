@@ -69,6 +69,7 @@ public class WorkoutActivity extends AppCompatActivity {
     private FirebaseFirestore db;
     private DatabaseService databaseService;
 
+    // In your WorkoutActivity class, update the onCreate method:
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -87,11 +88,19 @@ public class WorkoutActivity extends AppCompatActivity {
 
         // Initialize exercise list and adapter
         workoutExercises = new ArrayList<>();
-        adapter = new ExerciseAdapter(this, workoutExercises, exercise -> {
-            // Handle exercise click - we need to find the position first
-            int position = workoutExercises.indexOf(exercise);
-            showExerciseSets(exercise, position);
-        });
+        adapter = new ExerciseAdapter(this, workoutExercises, new ExerciseAdapter.OnExerciseClickListener() {
+            @Override
+            public void onExerciseClick(Exercise exercise) {
+                // Handle exercise click - we need to find the position first
+                int position = workoutExercises.indexOf(exercise);
+                showExerciseSets(exercise, position);
+            }
+
+            @Override
+            public void onExerciseRemove(Exercise exercise, int position) {
+                removeExerciseFromWorkout(exercise, position);
+            }
+        }, true); // true to show the remove button
 
         // Set up RecyclerView
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -105,6 +114,36 @@ public class WorkoutActivity extends AppCompatActivity {
 
         // Start workout timer
         startWorkout();
+    }
+
+    /**
+     * Remove an exercise from the current workout
+     * @param exercise The exercise to remove
+     * @param position The position in the RecyclerView
+     */
+    private void removeExerciseFromWorkout(Exercise exercise, int position) {
+        // Confirm removal
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.remove_exercise)
+                .setMessage(getString(R.string.remove_exercise_confirm, exercise.getName()))
+                .setPositiveButton(R.string.yes, (dialog, which) -> {
+                    // Remove from list for adapter
+                    workoutExercises.remove(position);
+
+                    // Remove from workout object
+                    currentWorkout.removeExercise(exercise.getId());
+
+                    // Update adapter
+                    adapter.notifyItemRemoved(position);
+
+                    // Update exercise count
+                    currentWorkout.setExerciseCount(workoutExercises.size());
+                    updateExerciseCountDisplay();
+
+                    Toast.makeText(this, R.string.exercise_removed, Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton(R.string.no, null)
+                .show();
     }
 
     private void initializeViews() {

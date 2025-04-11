@@ -135,4 +135,9 @@
     <string name="delete_account_confirm">Bạn có chắc muốn xóa tài khoản? Hành động này không thể hoàn tác.</string>
     <string name="profile_updated">Đã cập nhật hồ sơ</string>
     <string name="change_profile_picture">Đổi ảnh đại diện</string>
+
+    <!-- Add these strings -->
+    <string name="remove_exercise">Remove Exercise</string>
+    <string name="remove_exercise_confirm">Are you sure you want to remove %1$s from your workout?</string>
+    <string name="exercise_removed">Exercise removed from workout</string>
 </resources>

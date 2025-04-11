@@ -4,6 +4,7 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -22,11 +23,17 @@ public class ExerciseAdapter extends RecyclerView.Adapter<ExerciseAdapter.Exerci
     private Context context;
     private List<Exercise> exercises;
     private OnExerciseClickListener listener;
+    private boolean showRemoveButton = false;
 
     public ExerciseAdapter(Context context, List<Exercise> exercises, OnExerciseClickListener listener) {
         this.context = context;
         this.exercises = exercises;
         this.listener = listener;
+    }
+
+    public ExerciseAdapter(Context context, List<Exercise> exercises, OnExerciseClickListener listener, boolean showRemoveButton) {
+        this(context, exercises, listener);
+        this.showRemoveButton = showRemoveButton;
     }
 
     @NonNull
@@ -41,30 +48,14 @@ public class ExerciseAdapter extends RecyclerView.Adapter<ExerciseAdapter.Exerci
         Exercise exercise = exercises.get(position);
 
         holder.tvExerciseName.setText(exercise.getName());
-        holder.tvMuscleGroups.setText(formatMuscleGroups(exercise.getMuscleGroups()));
-        holder.tvDifficulty.setText(exercise.getDifficulty());
+        holder.tvExerciseTarget.setText(exercise.getMuscleGroups().get(0));
+        holder.tvExerciseDifficulty.setText(exercise.getDifficulty());
 
-        // Set difficulty color based on level
-        String difficulty = exercise.getDifficulty().toLowerCase();
-        int colorResId;
-        switch (difficulty) {
-            case "beginner":
-                colorResId = R.color.difficulty_beginner;
-                break;
-            case "intermediate":
-                colorResId = R.color.difficulty_intermediate;
-                break;
-            case "advanced":
-                colorResId = R.color.difficulty_advanced;
-                break;
-            default:
-                colorResId = R.color.difficulty_beginner;
-        }
-        holder.tvDifficulty.setTextColor(context.getResources().getColor(colorResId));
-
-        // Load image using Glide
+        // Load exercise image
         int resourceId = context.getResources().getIdentifier(
-                exercise.getDrawableResourceName(), "drawable", context.getPackageName());
+                exercise.getDrawableResourceName(),
+                "drawable",
+                context.getPackageName());
 
         if (resourceId != 0) {
             Glide.with(context)
@@ -73,67 +64,67 @@ public class ExerciseAdapter extends RecyclerView.Adapter<ExerciseAdapter.Exerci
                     .into(holder.ivExerciseImage);
         }
 
-        // Set click listener
+        // Set click listener for the card
         holder.cardView.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onExerciseClick(exercise);
             }
         });
+
+        // Show or hide remove button based on configuration
+        if (showRemoveButton) {
+            holder.btnRemove.setVisibility(View.VISIBLE);
+            holder.btnRemove.setOnClickListener(v -> {
+                if (listener != null) {
+                    listener.onExerciseRemove(exercise, position);
+                }
+            });
+        } else {
+            holder.btnRemove.setVisibility(View.GONE);
+        }
     }
 
     @Override
     public int getItemCount() {
-        return exercises.size();
+        return exercises != null ? exercises.size() : 0;
     }
 
     /**
      * Update the adapter data with filtered results
      * @param filteredList New list of exercises to display
      */
-    public void filterList(List<Exercise> filteredList) {
+    public void updateData(List<Exercise> filteredList) {
         this.exercises = filteredList;
         notifyDataSetChanged();
     }
 
     /**
-     * Format muscle groups list into a comma-separated string
+     * View holder for exercise items
      */
-    private String formatMuscleGroups(List<String> muscleGroups) {
-        if (muscleGroups == null || muscleGroups.isEmpty()) {
-            return "";
-        }
-
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < muscleGroups.size(); i++) {
-            sb.append(muscleGroups.get(i));
-            if (i < muscleGroups.size() - 1) {
-                sb.append(", ");
-            }
-        }
-
-        return sb.toString();
-    }
-
-    // View Holder
     static class ExerciseViewHolder extends RecyclerView.ViewHolder {
         CardView cardView;
         ImageView ivExerciseImage;
         TextView tvExerciseName;
-        TextView tvMuscleGroups;
-        TextView tvDifficulty;
+        TextView tvExerciseTarget;
+        TextView tvExerciseDifficulty;
+        ImageButton btnRemove;
 
         public ExerciseViewHolder(@NonNull View itemView) {
             super(itemView);
             cardView = itemView.findViewById(R.id.card_view);
             ivExerciseImage = itemView.findViewById(R.id.iv_exercise_image);
             tvExerciseName = itemView.findViewById(R.id.tv_exercise_name);
-            tvMuscleGroups = itemView.findViewById(R.id.tv_muscle_groups);
-            tvDifficulty = itemView.findViewById(R.id.tv_difficulty);
+            tvExerciseTarget = itemView.findViewById(R.id.tv_exercise_target);
+            tvExerciseDifficulty = itemView.findViewById(R.id.tv_exercise_difficulty);
+            btnRemove = itemView.findViewById(R.id.btn_remove_exercise);
         }
     }
 
-    // Callback interface for click events
+    /**
+     * Interface for handling exercise click events
+     */
     public interface OnExerciseClickListener {
         void onExerciseClick(Exercise exercise);
+        void onExerciseRemove(Exercise exercise, int position);
     }
 }
