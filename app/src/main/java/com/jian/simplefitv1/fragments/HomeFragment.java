@@ -74,13 +74,16 @@ public class HomeFragment extends Fragment {
 
         // Initialize views
         tvWelcome = view.findViewById(R.id.tv_welcome);
-        rvRecentRoutines = view.findViewById(R.id.rv_recent_routines);
+        /*
+        rvRecentRoutines = view.findViewById(R.id.rv_recent_routines);*/
         rvRecentWorkouts = view.findViewById(R.id.rv_recent_workouts);
         tvNoRoutines = view.findViewById(R.id.tv_no_routines);
         tvNoWorkouts = view.findViewById(R.id.tv_no_workouts);
         cardQuickStart = view.findViewById(R.id.card_quick_start);
         cardExploreExercises = view.findViewById(R.id.card_explore_exercises);
+        /*
         btnViewAllRoutines = view.findViewById(R.id.btn_view_all_routines);
+        */
         btnViewAllWorkouts = view.findViewById(R.id.btn_view_all_workouts);
 
         // Setup welcome message
@@ -106,17 +109,23 @@ public class HomeFragment extends Fragment {
     }
 
     private void setupRecentRoutines() {
+        // Check if RecyclerView exists before using it
+        if (rvRecentRoutines == null) {
+            // RecyclerView doesn't exist, so we skip setting it up
+            return;
+        }
+
         rvRecentRoutines.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
         routineAdapter = new RoutineAdapter(getContext(), recentRoutines);
         rvRecentRoutines.setAdapter(routineAdapter);
 
         if (currentUser != null) {
             db.collection("routines")
-                .whereEqualTo("userId", currentUser.getUid())
-                .orderBy("createdAt", Query.Direction.DESCENDING)
-                .limit(LIMIT_ROUTINES)
-                .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    .whereEqualTo("userId", currentUser.getUid())
+                    .orderBy("createdAt", Query.Direction.DESCENDING)
+                    .limit(LIMIT_ROUTINES)
+                    .get()
+                    .addOnSuccessListener(queryDocumentSnapshots -> {
                     if (!queryDocumentSnapshots.isEmpty()) {
                         tvNoRoutines.setVisibility(View.GONE);
                         rvRecentRoutines.setVisibility(View.VISIBLE);
@@ -176,6 +185,7 @@ public class HomeFragment extends Fragment {
             startActivity(intent);
         });
 
+        /*
         btnViewAllRoutines.setOnClickListener(v -> {
             if (getActivity() != null && getActivity() instanceof MainActivity) {
                 // Sử dụng phương thức điều hướng public nếu có
@@ -183,7 +193,7 @@ public class HomeFragment extends Fragment {
                 // Hoặc chuyển đến bottom navigation item tương ứng
                 ((MainActivity) getActivity()).selectNavItem(R.id.nav_routines);
             }
-        });
+        });*/
 
         btnViewAllWorkouts.setOnClickListener(v -> {
             if (getActivity() != null && getActivity() instanceof MainActivity) {

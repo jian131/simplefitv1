@@ -5,8 +5,20 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/purple_500"
+    android:background="@color/background_card_dark"
     tools:context=".activities.SplashActivity">
+
+
+    <ImageView
+        android:id="@+id/iv_app_logo"
+        android:layout_width="150dp"
+        android:layout_height="160dp"
+        android:layout_marginBottom="4dp"
+        android:src="@drawable/ic_logo"
+        app:layout_constraintBottom_toTopOf="@+id/tv_app_name"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
         android:id="@+id/tv_app_name"

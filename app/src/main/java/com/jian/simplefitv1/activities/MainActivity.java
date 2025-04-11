@@ -58,19 +58,21 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
 
         if (itemId == R.id.nav_home) {
             fragment = new HomeFragment();
-            // Hiện FAB start workout trên màn hình Home
+            // Show FAB start workout on Home screen
             fabStartWorkout.setVisibility(View.VISIBLE);
+        /* Temporarily disabled Routine functionality
         } else if (itemId == R.id.nav_routines) {
             fragment = new RoutineFragment();
-            // Ẩn FAB start workout trên màn hình Routines
+            // Hide FAB start workout on Routines screen
             fabStartWorkout.setVisibility(View.GONE);
+        */
         } else if (itemId == R.id.nav_history) {
             fragment = new WorkoutHistoryFragment();
-            // Ẩn FAB start workout trên màn hình History
+            // Hide FAB start workout on History screen
             fabStartWorkout.setVisibility(View.GONE);
         } else if (itemId == R.id.nav_profile) {
             fragment = new ProfileFragment();
-            // Ẩn FAB start workout trên màn hình Profile
+            // Hide FAB start workout on Profile screen
             fabStartWorkout.setVisibility(View.GONE);
         }
 

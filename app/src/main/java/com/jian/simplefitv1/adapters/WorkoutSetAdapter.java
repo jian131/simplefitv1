@@ -9,6 +9,7 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.CheckBox;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -133,11 +134,15 @@ public class WorkoutSetAdapter extends RecyclerView.Adapter<WorkoutSetAdapter.Wo
 
     private void updateCompletedState(WorkoutSetViewHolder holder, boolean completed) {
         if (completed) {
-            holder.btnComplete.setImageResource(R.drawable.ic_check_circle);
-            holder.itemView.setBackgroundColor(context.getResources().getColor(R.color.success));
+            // Visual feedback for completed set
+            holder.btnComplete.setChecked(true);
+            holder.itemView.setBackgroundColor(context.getResources().getColor(R.color.completed_background));
+            holder.tvSetNumber.setTextColor(context.getResources().getColor(R.color.accent));
         } else {
-            holder.btnComplete.setImageResource(R.drawable.ic_circle_outline);
-            holder.itemView.setBackgroundColor(context.getResources().getColor(R.color.white));
+            // Reset to default state
+            holder.btnComplete.setChecked(false);
+            holder.itemView.setBackground(null);
+            holder.tvSetNumber.setTextColor(context.getResources().getColor(R.color.text_primary));
         }
     }
 
@@ -179,7 +184,7 @@ public class WorkoutSetAdapter extends RecyclerView.Adapter<WorkoutSetAdapter.Wo
         TextView tvSetNumber;
         EditText etReps;
         EditText etWeight;
-        ImageButton btnComplete;
+        CheckBox btnComplete;  // Change from ImageButton to CheckBox
         ImageButton btnRemove;
 
         // Text watchers for input fields
@@ -191,7 +196,7 @@ public class WorkoutSetAdapter extends RecyclerView.Adapter<WorkoutSetAdapter.Wo
             tvSetNumber = itemView.findViewById(R.id.tv_set_number);
             etReps = itemView.findViewById(R.id.et_reps);
             etWeight = itemView.findViewById(R.id.et_weight);
-            btnComplete = itemView.findViewById(R.id.btn_complete);
+            btnComplete = itemView.findViewById(R.id.btn_complete);  // This should match a CheckBox in the layout
             btnRemove = itemView.findViewById(R.id.btn_remove);
         }
     }

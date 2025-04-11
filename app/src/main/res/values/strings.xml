@@ -140,4 +140,7 @@
     <string name="remove_exercise">Remove Exercise</string>
     <string name="remove_exercise_confirm">Are you sure you want to remove %1$s from your workout?</string>
     <string name="exercise_removed">Exercise removed from workout</string>
+    <string name="remove_set">Remove Set</string>
+    <string name="progress">Progress:</string>
+    <string name="weight_kg">Weight (kg):</string>
 </resources>

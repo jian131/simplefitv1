@@ -11,6 +11,7 @@ import android.widget.Button;
 import android.widget.Chronometer;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ProgressBar;
 import android.widget.EditText;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -354,6 +355,10 @@ public class WorkoutActivity extends AppCompatActivity {
         RecyclerView rvSets = dialogView.findViewById(R.id.rv_sets);
         rvSets.setLayoutManager(new LinearLayoutManager(this));
 
+        // Progress tracking components
+        ProgressBar progressBar = dialogView.findViewById(R.id.progress_bar);
+        TextView tvProgressPercentage = dialogView.findViewById(R.id.tv_progress_percentage);
+
         // Get the sets for this exercise from workout, or create if not exists
         final String exerciseId = exercise.getId();
         List<WorkoutSet> exerciseSets = currentWorkout.getExercises().get(exerciseId);
@@ -380,12 +385,14 @@ public class WorkoutActivity extends AppCompatActivity {
                 if (pos >= 0 && pos < setsList.size()) {
                     setsList.set(pos, set);
                 }
+                updateProgressDisplay();
             }
 
             @Override
             public void onSetCompleted(int pos, WorkoutSet set) {
                 if (pos >= 0 && pos < setsList.size()) {
                     setsList.get(pos).setCompleted(set.isCompleted());
+                    updateProgressDisplay();
                 }
             }
 
@@ -396,8 +403,24 @@ public class WorkoutActivity extends AppCompatActivity {
                     // Use the adapter from the reference array
                     if (adapterRef[0] != null) {
                         adapterRef[0].notifyDataSetChanged();
+                        updateProgressDisplay();
                     }
                 }
+            }
+
+            private void updateProgressDisplay() {
+                int totalSets = setsList.size();
+                int completedSets = 0;
+
+                for (WorkoutSet set : setsList) {
+                    if (set.isCompleted()) {
+                        completedSets++;
+                    }
+                }
+
+                int percentage = totalSets > 0 ? (completedSets * 100) / totalSets : 0;
+                progressBar.setProgress(percentage);
+                tvProgressPercentage.setText(percentage + "%");
             }
         };
 
@@ -406,6 +429,18 @@ public class WorkoutActivity extends AppCompatActivity {
 
         // Set the adapter to the RecyclerView
         rvSets.setAdapter(adapterRef[0]);
+
+        // Initial progress update
+        int totalSets = setsList.size();
+        int completedSets = 0;
+        for (WorkoutSet set : setsList) {
+            if (set.isCompleted()) {
+                completedSets++;
+            }
+        }
+        int percentage = totalSets > 0 ? (completedSets * 100) / totalSets : 0;
+        progressBar.setProgress(percentage);
+        tvProgressPercentage.setText(percentage + "%");
 
         // Setup "Add Set" button
         Button btnAddSet = dialogView.findViewById(R.id.btn_add_set);
@@ -416,6 +451,18 @@ public class WorkoutActivity extends AppCompatActivity {
             }
             final int lastPosition = setsList.size() - 1;
             rvSets.post(() -> rvSets.smoothScrollToPosition(lastPosition));
+
+            // Update progress without redefining variables
+            int currentTotalSets = setsList.size();
+            int currentCompletedSets = 0;
+            for (WorkoutSet set : setsList) {
+                if (set.isCompleted()) {
+                    currentCompletedSets++;
+                }
+            }
+            int currentPercentage = currentTotalSets > 0 ? (currentCompletedSets * 100) / currentTotalSets : 0;
+            progressBar.setProgress(currentPercentage);
+            tvProgressPercentage.setText(currentPercentage + "%");
         });
 
         // Create and show the dialog
