@@ -1,0 +1,80 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Theme.SimpleFit" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+        <!-- Primary brand color. -->
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryVariant">@color/primary_dark</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <!-- Secondary brand color. -->
+        <item name="colorSecondary">@color/accent</item>
+        <item name="colorSecondaryVariant">@color/accent_dark</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <!-- Status bar color. -->
+        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+        <!-- Background colors -->
+        <item name="android:colorBackground">@color/background</item>
+        <item name="colorSurface">@color/background_card</item>
+        <!-- Text colors -->
+        <item name="android:textColorPrimary">@color/text_primary</item>
+        <item name="android:textColorSecondary">@color/text_secondary</item>
+        <item name="android:textColorHint">@color/text_hint</item>
+        <!-- Card style -->
+        <item name="cardBackgroundColor">@color/background_card</item>
+        <item name="cardCornerRadius">8dp</item>
+        <item name="cardElevation">2dp</item>
+        <!-- Button style customizations -->
+        <item name="materialButtonStyle">@style/Widget.SimpleFit.Button</item>
+        <!-- Text input style customization -->
+        <item name="textInputStyle">@style/Widget.SimpleFit.TextInputLayout</item>
+    </style>
+
+    <!-- No ActionBar theme for certain activities -->
+    <style name="Theme.SimpleFit.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <!-- Custom button style -->
+    <style name="Widget.SimpleFit.Button" parent="Widget.MaterialComponents.Button">
+        <item name="android:textAllCaps">false</item>
+        <item name="cornerRadius">8dp</item>
+        <item name="android:paddingStart">24dp</item>
+        <item name="android:paddingEnd">24dp</item>
+    </style>
+
+    <!-- Custom TextInputLayout style -->
+    <style name="Widget.SimpleFit.TextInputLayout" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="boxCornerRadiusBottomEnd">8dp</item>
+        <item name="boxCornerRadiusBottomStart">8dp</item>
+        <item name="boxCornerRadiusTopEnd">8dp</item>
+        <item name="boxCornerRadiusTopStart">8dp</item>
+    </style>
+
+    <!-- Style for full screen dialogs -->
+    <style name="ThemeOverlay.SimpleFit.FullScreenDialog" parent="ThemeOverlay.MaterialComponents.Dialog.Alert">
+        <item name="android:windowMinWidthMajor">100%</item>
+        <item name="android:windowMinWidthMinor">100%</item>
+    </style>
+
+    <!-- Style for bottom sheet dialogs -->
+    <style name="ThemeOverlay.SimpleFit.BottomSheetDialog" parent="ThemeOverlay.MaterialComponents.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/Widget.SimpleFit.BottomSheet</item>
+    </style>
+
+    <style name="Widget.SimpleFit.BottomSheet" parent="Widget.MaterialComponents.BottomSheet">
+        <item name="shapeAppearance">@style/ShapeAppearance.SimpleFit.LargeComponent</item>
+    </style>
+
+    <style name="ShapeAppearance.SimpleFit.LargeComponent" parent="ShapeAppearance.MaterialComponents.LargeComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">16dp</item>
+    </style>
+
+    <!-- Splash Screen theme -->
+    <style name="Theme.SimpleFit.Splash">
+        <item name="android:windowBackground">@drawable/splash_background</item>
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:statusBarColor">@color/purple_700</item>
+    </style>
+</resources>

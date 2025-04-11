@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory
+        android:title="Tài khoản"
+        app:iconSpaceReserved="false">
+
+        <Preference
+            android:key="account_info"
+            android:title="Thông tin tài khoản"
+            android:summary="Xem chi tiết tài khoản của bạn"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            android:key="change_password"
+            android:title="Đổi mật khẩu"
+            android:summary="Cập nhật mật khẩu của bạn"
+            app:iconSpaceReserved="false" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="Thông báo"
+        app:iconSpaceReserved="false">
+
+        <SwitchPreferenceCompat
+            android:key="notifications_enabled"
+            android:title="Bật thông báo"
+            android:defaultValue="true"
+            app:iconSpaceReserved="false" />
+
+        <SwitchPreferenceCompat
+            android:key="workout_reminders"
+            android:title="Nhắc nhở tập luyện"
+            android:summary="Nhận thông báo nhắc nhở bạn tập luyện"
+            android:defaultValue="true"
+            app:iconSpaceReserved="false"
+            app:dependency="notifications_enabled" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="Ứng dụng"
+        app:iconSpaceReserved="false">
+
+        <Preference
+            android:key="app_version"
+            android:title="Phiên bản ứng dụng"
+            android:summary="1.0.0"
+            android:selectable="false"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            android:key="privacy_policy"
+            android:title="Chính sách bảo mật"
+            app:iconSpaceReserved="false" />
+
+        <Preference
+            android:key="terms_of_service"
+            android:title="Điều khoản sử dụng"
+            app:iconSpaceReserved="false" />
+    </PreferenceCategory>
+</PreferenceScreen>
