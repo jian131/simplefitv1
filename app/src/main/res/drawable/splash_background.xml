@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Màu nền cho splash screen -->
+    <item android:drawable="@color/purple_500"/>
+
+    <!-- Logo ở giữa -->
+    <item android:gravity="center">
+        <shape android:shape="rectangle">
+            <size android:width="200dp" android:height="200dp"/>
+            <solid android:color="@android:color/transparent"/>
+            <!-- Thay thế <bitmap> bị lỗi bằng TextView trong RelativeLayout -->
+        </shape>
+    </item>
+</layer-list>
