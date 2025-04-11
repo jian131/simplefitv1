@@ -39,18 +39,21 @@
         <activity
             android:name=".activities.ProfileActivity"
             android:exported="false"
+            android:theme="@style/Theme.SimpleFit.NoActionBar"
             android:parentActivityName=".activities.MainActivity" />
 
         <!-- SettingsActivity -->
         <activity
             android:name=".activities.SettingsActivity"
             android:label="@string/title_settings"
+            android:theme="@style/Theme.SimpleFit.NoActionBar"
             android:parentActivityName=".activities.MainActivity" />
 
         <!-- ExerciseDetailActivity -->
         <activity
             android:name=".activities.ExerciseDetailActivity"
             android:exported="false"
+            android:theme="@style/Theme.SimpleFit.NoActionBar"
             android:parentActivityName=".activities.ExerciseLibraryActivity" />
 
         <!-- ExerciseLibraryActivity -->
