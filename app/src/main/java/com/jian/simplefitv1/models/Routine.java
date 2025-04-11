@@ -15,6 +15,8 @@ public class Routine {
     private long updatedAt;
     private int estimatedMinutes;
     private int exerciseCount;
+    private int workoutCount; // Added field for number of workouts
+    private List<String> workoutIds; // Reference to workouts in this routine
     private List<String> tags;
     private boolean isPublic;
 
@@ -55,6 +57,45 @@ public class Routine {
         this.name = name;
         this.description = description;
     }
+
+    // Add getters and setters for new fields
+    public int getWorkoutCount() {
+        return workoutCount;
+    }
+
+
+    public void setWorkoutCount(int workoutCount) {
+        this.workoutCount = workoutCount;
+    }
+
+    public List<String> getWorkoutIds() {
+        return workoutIds;
+    }
+
+    public void setWorkoutIds(List<String> workoutIds) {
+        this.workoutIds = workoutIds != null ? workoutIds : new ArrayList<>();
+        this.workoutCount = this.workoutIds.size();
+    }
+
+    // Add helper method to add a workout to this routine
+    public void addWorkoutId(String workoutId) {
+        if (this.workoutIds == null) {
+            this.workoutIds = new ArrayList<>();
+        }
+        if (!this.workoutIds.contains(workoutId)) {
+            this.workoutIds.add(workoutId);
+            this.workoutCount = this.workoutIds.size();
+        }
+    }
+
+    // Add helper method to remove a workout from this routine
+    public void removeWorkoutId(String workoutId) {
+        if (this.workoutIds != null) {
+            this.workoutIds.remove(workoutId);
+            this.workoutCount = this.workoutIds.size();
+        }
+    }
+
 
     // Getters and setters
     public String getId() {

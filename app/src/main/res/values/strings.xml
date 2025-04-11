@@ -114,6 +114,10 @@
     <string name="no_history">Chưa có lịch sử tập luyện. Hoàn thành một buổi tập để xem tại đây.</string>
     <string name="workout_details">Chi tiết buổi tập</string>
 
+
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+
     <!-- Profile -->
     <string name="edit_profile">Chỉnh sửa hồ sơ</string>
     <string name="settings">Cài đặt</string>

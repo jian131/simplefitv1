@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
+import com.google.firebase.firestore.Exclude;
 
 /**
  * Model class representing a workout session
@@ -48,6 +51,43 @@ public class Workout {
 
         // Calculate exercise count
         this.exerciseCount = this.exercises.size();
+    }
+
+    // The current Workout model already has a Map<String, List<WorkoutSet>> exercises field that maps
+// exercise IDs to lists of sets, so it's already structured to handle multiple exercises.
+// Let's add more utility methods to better work with exercises.
+
+    /**
+     * Add an exercise to this workout (without any sets)
+     * @param exerciseId The exercise ID to add
+     */
+    public void addExercise(String exerciseId) {
+        if (!exercises.containsKey(exerciseId)) {
+            exercises.put(exerciseId, new ArrayList<>());
+            this.exerciseCount = this.exercises.size();
+        }
+    }
+
+    /**
+     * Remove an exercise and all its sets from this workout
+     * @param exerciseId The exercise ID to remove
+     * @return true if removed, false if not found
+     */
+    public boolean removeExercise(String exerciseId) {
+        boolean removed = exercises.remove(exerciseId) != null;
+        if (removed) {
+            this.exerciseCount = this.exercises.size();
+        }
+        return removed;
+    }
+
+    /**
+     * Get all exercise IDs in this workout
+     * @return Set of exercise IDs
+     */
+    @Exclude // This won't be stored in Firestore directly
+    public Set<String> getExerciseIds() {
+        return exercises.keySet();
     }
 
     // Getters and setters

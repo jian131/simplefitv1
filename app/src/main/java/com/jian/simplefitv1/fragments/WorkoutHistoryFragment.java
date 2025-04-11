@@ -7,6 +7,8 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.util.Log;
+import android.content.Intent;
+import android.net.Uri;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -18,6 +20,7 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.jian.simplefitv1.R;
@@ -35,6 +38,7 @@ public class WorkoutHistoryFragment extends Fragment implements WorkoutAdapter.O
     private RecyclerView rvWorkouts;
     private TextView tvNoWorkouts;
     private SwipeRefreshLayout swipeRefreshLayout;
+    private TextView tvTotalWorkouts, tvTotalDuration, tvTotalExercises;
 
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
@@ -56,19 +60,15 @@ public class WorkoutHistoryFragment extends Fragment implements WorkoutAdapter.O
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_workout_history, container, false);
 
-        // Using correct RecyclerView ID that matches the layout file
+        // Initialize views
         rvWorkouts = view.findViewById(R.id.rv_workout_history);
-
+        tvNoWorkouts = view.findViewById(R.id.tv_no_workouts);
         swipeRefreshLayout = view.findViewById(R.id.swipe_refresh_layout);
 
-        // Set up RecyclerView
-        rvWorkouts.setLayoutManager(new LinearLayoutManager(getContext()));
-        workouts = new ArrayList<>();
-        adapter = new WorkoutAdapter(getContext(), workouts);
-        rvWorkouts.setAdapter(adapter);
-
-        // Set up SwipeRefreshLayout
-        swipeRefreshLayout.setOnRefreshListener(this::loadWorkoutHistory);
+        // Initialize statistics views
+        tvTotalWorkouts = view.findViewById(R.id.tv_total_workouts);
+        tvTotalDuration = view.findViewById(R.id.tv_total_duration);
+        tvTotalExercises = view.findViewById(R.id.tv_total_exercises);
 
         return view;
     }
@@ -76,13 +76,6 @@ public class WorkoutHistoryFragment extends Fragment implements WorkoutAdapter.O
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
-        // Corrigindo ID de rv_workouts para rv_workout_history
-        rvWorkouts = view.findViewById(R.id.rv_workout_history);
-        tvNoWorkouts = view.findViewById(R.id.tv_no_workouts);
-
-        // Corrigindo ID de swipe_refresh para swipe_refresh_layout
-        swipeRefreshLayout = view.findViewById(R.id.swipe_refresh_layout);
 
         // Setup RecyclerView
         setupRecyclerView();
@@ -101,79 +94,132 @@ public class WorkoutHistoryFragment extends Fragment implements WorkoutAdapter.O
     }
 
     private void loadWorkoutHistory() {
-        if (!isAdded()) {
-            return; // Fragment not attached to activity
-        }
-
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (currentUser == null) {
-            // Handle not logged in state
+        if (!isAdded() || currentUser == null) {
             return;
         }
 
-        // Start loading indicator
         swipeRefreshLayout.setRefreshing(true);
+        workouts.clear();
 
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        db.collection("workouts")
-                .whereEqualTo("userId", currentUser.getUid())
-                .orderBy("endTime", Query.Direction.DESCENDING)
-                .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    // Check if fragment is still attached
-                    if (!isAdded() || getView() == null) {
-                        return;
-                    }
+        try {
+            db.collection("workouts")
+                    .whereEqualTo("userId", currentUser.getUid())
+                    .whereEqualTo("completed", true)
+                    .orderBy("endTime", Query.Direction.DESCENDING)
+                    .get()
+                    .addOnSuccessListener(queryDocumentSnapshots -> {
+                        if (!isAdded()) return;
 
-                    // Process results and update UI
-                    // ... existing code ...
-                })
-                .addOnFailureListener(e -> {
-                    if (isAdded()) {
                         swipeRefreshLayout.setRefreshing(false);
-                        // Show error message
-                    }
-                });
+
+                        if (queryDocumentSnapshots.isEmpty()) {
+                            showEmptyState();
+                            return;
+                        }
+
+                        tvNoWorkouts.setVisibility(View.GONE);
+                        rvWorkouts.setVisibility(View.VISIBLE);
+
+                        int totalWorkouts = 0;
+                        long totalDuration = 0;
+                        int totalExercises = 0;
+
+                        for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
+                            Workout workout = document.toObject(Workout.class);
+                            workout.setId(document.getId());
+                            workouts.add(workout);
+
+                            totalWorkouts++;
+                            totalDuration += workout.getDuration();
+                            totalExercises += workout.getExerciseCount();
+                        }
+
+                        adapter.notifyDataSetChanged();
+                        updateWorkoutStatistics(totalWorkouts, totalDuration, totalExercises);
+
+                        Log.d(TAG, "Loaded " + workouts.size() + " workouts");
+                    })
+                    .addOnFailureListener(e -> {
+                        if (isAdded()) {
+                            swipeRefreshLayout.setRefreshing(false);
+                            handleQueryError(e);
+                        }
+                    });
+        } catch (Exception e) {
+            swipeRefreshLayout.setRefreshing(false);
+            handleQueryError(e);
+        }
+    }
+
+    private void handleQueryError(Exception e) {
+        Log.e(TAG, "Error loading workouts", e);
+
+        if (e instanceof FirebaseFirestoreException) {
+            String message = e.getMessage();
+            if (message != null && message.contains("index")) {
+                // Extract the index link from the error message
+                int linkStart = message.indexOf("https://");
+                if (linkStart != -1) {
+                    String indexLink = message.substring(linkStart);
+                    // Show dialog with option to create the index
+                    showCreateIndexDialog(indexLink);
+                    return;
+                }
+            }
+        }
+
+        // Default error handling
+        showEmptyState();
+        Toast.makeText(getContext(), "Error loading workouts. Please try again later.", Toast.LENGTH_SHORT).show();
+    }
+
+    private void showCreateIndexDialog(String indexLink) {
+        if (!isAdded()) return;
+
+        new android.app.AlertDialog.Builder(getContext())
+                .setTitle("Index Required")
+                .setMessage("This query requires a Firestore index. You need to create it to view your workout history.")
+                .setPositiveButton("Create Index", (dialog, which) -> {
+                    // Open the browser with the index creation link
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(indexLink));
+                    startActivity(intent);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void showEmptyState() {
+        if (!isAdded()) return;
+
+        tvNoWorkouts.setVisibility(View.VISIBLE);
+        rvWorkouts.setVisibility(View.GONE);
+        updateWorkoutStatistics(0, 0, 0);
     }
 
     private void updateWorkoutStatistics(int workoutCount, long totalDuration, int totalExercises) {
-        // Make sure fragment is still attached and view exists
-        View view = getView();
-        if (view == null || !isAdded()) {
-            return;  // Fragment view is null or fragment is not attached to activity
-        }
+        if (!isAdded()) return;
 
         try {
-            // Now safely find the views with correct IDs
-            TextView tvWorkoutCount = view.findViewById(R.id.tv_stats_workout_count);
-            TextView tvTotalDuration = view.findViewById(R.id.tv_stats_duration);
-            TextView tvTotalExercises = view.findViewById(R.id.tv_stats_exercise_count);
-
-            if (tvWorkoutCount != null) {
-                tvWorkoutCount.setText(String.valueOf(workoutCount));
+            if (tvTotalWorkouts != null) {
+                tvTotalWorkouts.setText(String.valueOf(workoutCount));
             }
-
             if (tvTotalDuration != null) {
                 tvTotalDuration.setText(TimeUtils.formatDuration(totalDuration));
             }
-
             if (tvTotalExercises != null) {
                 tvTotalExercises.setText(String.valueOf(totalExercises));
             }
         } catch (Exception e) {
-            Log.e("WorkoutHistoryFragment", "Error updating statistics", e);
+            Log.e(TAG, "Error updating statistics", e);
         }
-    }
-
-    private void showEmptyState() {
-        tvNoWorkouts.setVisibility(View.VISIBLE);
-        rvWorkouts.setVisibility(View.GONE);
     }
 
     @Override
     public void onWorkoutClick(Workout workout) {
-        // Show workout details dialog or navigate to detail screen
-        WorkoutDetailDialogFragment dialog = WorkoutDetailDialogFragment.newInstance(workout.getId());
-        dialog.show(getChildFragmentManager(), "WorkoutDetailDialog");
+        if (isAdded() && workout != null && workout.getId() != null) {
+            WorkoutDetailDialogFragment dialogFragment =
+                    WorkoutDetailDialogFragment.newInstance(workout.getId());
+            dialogFragment.show(getParentFragmentManager(), "workout_detail");
+        }
     }
 }

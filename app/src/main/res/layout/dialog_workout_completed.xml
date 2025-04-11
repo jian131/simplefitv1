@@ -11,7 +11,7 @@
         android:id="@+id/tv_congrats_title"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Workout Complete!"
+        android:text="@string/workout_complete"
         android:textSize="24sp"
         android:textStyle="bold"
         android:textAlignment="center"
@@ -20,167 +20,96 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <ImageView
-        android:id="@+id/iv_trophy"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
-        android:layout_marginTop="16dp"
-        android:src="@drawable/ic_trophy"
-        android:contentDescription="Trophy"
-        app:layout_constraintTop_toBottomOf="@id/tv_congrats_title"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
     <TextView
         android:id="@+id/tv_great_job"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Great job! You've completed your workout."
+        android:text="@string/great_job"
         android:textSize="16sp"
         android:textAlignment="center"
-        app:layout_constraintTop_toBottomOf="@id/iv_trophy"
+        android:layout_marginTop="8dp"
+        app:layout_constraintTop_toBottomOf="@id/tv_congrats_title"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
+    <ImageView
+        android:id="@+id/iv_trophy"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_marginTop="16dp"
+        android:src="@drawable/ic_trophy"
+        app:layout_constraintTop_toBottomOf="@id/tv_great_job"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:contentDescription="Trophy icon" />
+
     <androidx.cardview.widget.CardView
-        android:id="@+id/card_workout_stats"
+        android:id="@+id/card_stats"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="16dp"
         app:cardCornerRadius="8dp"
-        app:cardElevation="2dp"
-        app:layout_constraintTop_toBottomOf="@id/tv_great_job"
+        app:layout_constraintTop_toBottomOf="@id/iv_trophy"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <LinearLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
             android:padding="16dp">
 
-            <LinearLayout
-                android:layout_width="match_parent"
+            <TextView
+                android:id="@+id/tv_duration_label"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:text="@string/duration"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Duration:"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tv_workout_duration"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    tools:text="45 min" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
+            <TextView
+                android:id="@+id/tv_stats_duration"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                app:layout_constraintStart_toEndOf="@id/tv_duration_label"
+                app:layout_constraintTop_toTopOf="@id/tv_duration_label"
+                tools:text="5:00" />
+
+            <TextView
+                android:id="@+id/tv_exercises_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/exercises_completed"
+                android:textStyle="bold"
                 android:layout_marginTop="8dp"
-                android:orientation="horizontal">
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tv_duration_label" />
 
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Exercises completed:"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tv_exercises_completed"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    tools:text="8 exercises" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
+            <TextView
+                android:id="@+id/tv_stats_exercise_count"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:orientation="horizontal">
+                android:layout_marginStart="8dp"
+                app:layout_constraintStart_toEndOf="@id/tv_exercises_label"
+                app:layout_constraintTop_toTopOf="@id/tv_exercises_label"
+                tools:text="5" />
 
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Sets completed:"
-                    android:textStyle="bold" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
-                <TextView
-                    android:id="@+id/tv_sets_completed"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    tools:text="24 sets" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Completion rate:"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tv_completion_rate"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    tools:text="95%" />
-            </LinearLayout>
-        </LinearLayout>
     </androidx.cardview.widget.CardView>
 
     <EditText
-        android:id="@+id/et_workout_notes"
-        android:layout_width="0dp"
+        android:id="@+id/et_notes"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:hint="Add notes about this workout (optional)"
-        android:minHeight="80dp"
-        android:gravity="top"
-        android:padding="8dp"
+        android:hint="@string/add_notes"
+        android:minLines="2"
+        android:maxLines="4"
         android:inputType="textMultiLine"
-        android:background="@drawable/edit_text_border"
-        app:layout_constraintTop_toBottomOf="@id/card_workout_stats"
+        app:layout_constraintTop_toBottomOf="@id/card_stats"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
-
-    <LinearLayout
-        android:id="@+id/button_layout"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:orientation="horizontal"
-        android:gravity="end"
-        app:layout_constraintTop_toBottomOf="@id/et_workout_notes"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent">
-
-        <Button
-            android:id="@+id/btn_discard"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Discard" />
-
-        <Button
-            android:id="@+id/btn_save"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Save"
-            android:layout_marginStart="8dp" />
-    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
