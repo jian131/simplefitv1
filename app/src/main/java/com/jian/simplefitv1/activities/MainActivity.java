@@ -54,16 +54,24 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         Fragment fragment = null;
-
         int itemId = item.getItemId();
+
         if (itemId == R.id.nav_home) {
             fragment = new HomeFragment();
+            // Hiện FAB start workout trên màn hình Home
+            fabStartWorkout.setVisibility(View.VISIBLE);
         } else if (itemId == R.id.nav_routines) {
             fragment = new RoutineFragment();
+            // Ẩn FAB start workout trên màn hình Routines
+            fabStartWorkout.setVisibility(View.GONE);
         } else if (itemId == R.id.nav_history) {
             fragment = new WorkoutHistoryFragment();
+            // Ẩn FAB start workout trên màn hình History
+            fabStartWorkout.setVisibility(View.GONE);
         } else if (itemId == R.id.nav_profile) {
             fragment = new ProfileFragment();
+            // Ẩn FAB start workout trên màn hình Profile
+            fabStartWorkout.setVisibility(View.GONE);
         }
 
         if (fragment != null) {
@@ -73,7 +81,7 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
         return false;
     }
 
-    private void loadFragment(Fragment fragment) {
+    public void loadFragment(Fragment fragment) {
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         transaction.replace(R.id.fragment_container, fragment);
         transaction.commit();
@@ -103,7 +111,7 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
 
     @Override
     public void onBackPressed() {
-        // If we're not on the home fragment, navigate to it, otherwise default back button behavior
+        // Nếu không phải là Home Fragment, chuyển về Home
         if (bottomNavigationView.getSelectedItemId() != R.id.nav_home) {
             bottomNavigationView.setSelectedItemId(R.id.nav_home);
         } else {

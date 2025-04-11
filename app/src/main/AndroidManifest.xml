@@ -62,7 +62,9 @@
         <!-- WorkoutActivity -->
         <activity
             android:name=".activities.WorkoutActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/Theme.SimpleFit.NoActionBar"
+            android:parentActivityName=".activities.MainActivity" />
 
         <!-- RoutineActivity -->
         <activity

@@ -75,6 +75,8 @@ public class RoutineFragment extends Fragment implements RoutineAdapter.OnRoutin
         // Setup RecyclerView
         setupRecyclerView();
 
+        fabAddRoutine.setVisibility(View.VISIBLE);
+
         // Setup SwipeRefreshLayout
         swipeRefreshLayout.setOnRefreshListener(this::loadRoutines);
 
